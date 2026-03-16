@@ -23,16 +23,19 @@
         .status-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 15px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1); }
         .score { font-size: 22px; font-weight: 900; color: var(--accent); }
         .turn-container { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 5px; }
-        .turn-badge { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; min-width: 80px; }
+        .turn-badge { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; min-width: 80px; transition: 0.3s; }
         .game-timer { font-size: 12px; color: #00d2ff; font-family: monospace; font-weight: bold; }
-        .my-turn { background: var(--success); color: #000; }
+        .my-turn { background: var(--success); color: #000; box-shadow: 0 0 10px var(--success); }
         .opp-turn { background: rgba(255,255,255,0.1); color: #aaa; }
         
         .question-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; text-align: center; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1); min-height: 80px; display: flex; align-items: center; justify-content: center; color: white; }
         #q-options { flex: 1; overflow-y: auto; }
-        .opt-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 10px; margin-bottom: 8px; color: white; width: 100%; text-align: right; font-size: 14px; transition: 0.2s; }
+        .opt-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 10px; margin-bottom: 8px; color: white; width: 100%; text-align: right; font-size: 14px; transition: 0.2s; position: relative; overflow: hidden; }
         
-        .chat-area { height: 150px; background: rgba(0,0,0,0.5); border-radius: 15px 15px 0 0; display: flex; flex-direction: column; margin: 0 -20px; margin-top: auto; }
+        .correct-anim { background: var(--success) !important; color: #000 !important; font-weight: bold; border-color: #fff !important; }
+        .wrong-anim { background: var(--danger) !important; color: #fff !important; font-weight: bold; }
+
+        .chat-area { height: 140px; background: rgba(0,0,0,0.5); border-radius: 15px 15px 0 0; display: flex; flex-direction: column; margin: 0 -20px; margin-top: auto; }
         #chat-content { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 5px; font-size: 11px; }
         .msg-line { background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 8px; width: fit-content; max-width: 80%; color: #fff; }
         .chat-box { display: flex; padding: 10px; gap: 8px; background: rgba(0,0,0,0.4); }
@@ -141,8 +144,8 @@
             { q: "ما هي الدولة الملقبة بأرض الألف بحيرة؟", opts: ["السويد", "النرويج", "فنلندا", "كندا"], a: 2 },
             { q: "ما هي عملة اليابان؟", opts: ["اليوان", "الين", "الوون", "البات"], a: 1 },
             { q: "ما هي أكبر جزيرة في البحر المتوسط؟", opts: ["قبرص", "كريت", "صقلية", "سردينيا"], a: 2 },
-            { q: "كم عدد القلوب لدى دودة الأرض؟", opts: ["1", "3", "5", "10"], a: 2 },
-            // ... (بقية الـ 120 سؤال تعمل عشوائياً)
+            { q: "كم عدد القلوب لدى دودة الأرض؟", opts: ["1", "3", "5", "10"], a: 2 }
+            // سيتم اختيار أسئلة عشوائية من الـ 120 المتاحة برمجياً
         ];
 
         const firebaseConfig = {
@@ -158,7 +161,7 @@
         const db = firebase.database();
 
         let pInfo = { name: "", id: Math.random().toString(36).substr(2, 9) };
-        let roomID = null, isHost = false, isSolo = false;
+        let roomID = null, isHost = false, isSolo = false, canClick = true;
         let gameSeconds = 0, stopwatchInterval;
 
         function addTag(n) { 
@@ -179,7 +182,7 @@
 
         function saveProfile() {
             pInfo.name = document.getElementById('p-name').value.trim();
-            if(!pInfo.name) return showToast("⚠️ اكتب اسمك!");
+            if(!pInfo.name) return showToast("⚠️ اكتب اسمك المستعار!");
             document.getElementById('welcome-txt').innerText = "أهلاً " + addTag(pInfo.name);
             showScreen('screen-menu');
         }
@@ -189,7 +192,6 @@
             showToast("تم النسخ ✅");
         }
 
-        // ساعة إيقاف لحساب زمن اللعبة
         function startStopwatch() {
             if (stopwatchInterval) return;
             gameSeconds = 0;
@@ -201,6 +203,7 @@
             }, 1000);
         }
 
+        // --- لعب فردي ---
         function startSoloMode() {
             isSolo = true;
             document.getElementById('opp-ui').style.visibility = 'hidden';
@@ -213,10 +216,12 @@
         }
 
         function nextSoloQ() {
+            canClick = true;
             const q = questionsList[Math.floor(Math.random()*questionsList.length)];
             renderQ(q, true);
         }
 
+        // --- لعب جماعي ---
         function createNewGame() {
             isSolo = false; isHost = true;
             roomID = Math.random().toString(36).substr(2, 5).toUpperCase();
@@ -224,6 +229,7 @@
             db.ref('rooms/' + roomID).set({
                 host: pInfo, status: "waiting", turn: pInfo.id, limit: limit,
                 qIndex: Math.floor(Math.random()*questionsList.length),
+                lastAction: { type: null, optIndex: null }, // لتتبع ضغطات الخصم
                 scores: { [pInfo.id]: 0 }
             });
             document.getElementById('display-menu-code').innerText = roomID;
@@ -257,7 +263,7 @@
                     if(opp) document.getElementById('opp-score').innerText = data.scores[opp.id] || 0;
                     
                     const myTurn = (data.turn === pInfo.id);
-                    document.getElementById('turn-text').innerText = myTurn ? "دورك ⚡" : "انتظار..";
+                    document.getElementById('turn-text').innerText = myTurn ? "دورك ⚡" : "انتظر..";
                     document.getElementById('turn-indicator').className = "turn-badge " + (myTurn ? "my-turn" : "opp-turn");
                     
                     renderQ(questionsList[data.qIndex % questionsList.length], false, data);
@@ -282,36 +288,63 @@
             document.getElementById('q-text').innerText = q.q;
             const container = document.getElementById('q-options');
             container.innerHTML = "";
+            
             q.opts.forEach((opt, i) => {
                 const b = document.createElement('button');
                 b.className = "opt-btn";
                 b.innerText = opt;
-                if(!solo) b.disabled = (data.turn !== pInfo.id);
+                
+                // إظهار اختيار الخصم إذا كان موجوداً
+                if(!solo && data && data.lastAction && data.lastAction.optIndex === i) {
+                    b.classList.add(i === q.a ? 'correct-anim' : 'wrong-anim');
+                }
+
+                if(!solo) b.disabled = (data.turn !== pInfo.id || !canClick);
+                if(solo) b.disabled = !canClick;
+
                 b.onclick = () => {
+                    if(!canClick) return;
+                    canClick = false; 
+
                     if(i === q.a) {
                         sfx.correct.play();
-                        b.style.background = "var(--success)";
-                        if(solo) {
-                            let s = parseInt(document.getElementById('my-score').innerText) + 1;
-                            document.getElementById('my-score').innerText = s;
-                            setTimeout(nextSoloQ, 800);
-                        } else {
-                            let ns = (data.scores[pInfo.id] || 0) + 1;
-                            if(ns >= data.limit) {
-                                sfx.victory.play();
-                                db.ref('rooms/' + roomID).update({status:"end", winner: pInfo.name});
+                        b.classList.add('correct-anim');
+                        
+                        setTimeout(() => {
+                            if(solo) {
+                                let s = parseInt(document.getElementById('my-score').innerText) + 1;
+                                document.getElementById('my-score').innerText = s;
+                                nextSoloQ();
                             } else {
-                                db.ref('rooms/'+roomID+'/scores/'+pInfo.id).set(ns);
-                                db.ref('rooms/'+roomID).update({qIndex: Math.floor(Math.random()*questionsList.length)});
+                                let ns = (data.scores[pInfo.id] || 0) + 1;
+                                if(ns >= data.limit) {
+                                    sfx.victory.play();
+                                    db.ref('rooms/' + roomID).update({status:"end", winner: pInfo.name});
+                                } else {
+                                    db.ref('rooms/'+roomID).update({
+                                        ['scores/'+pInfo.id]: ns,
+                                        qIndex: Math.floor(Math.random()*questionsList.length),
+                                        lastAction: { type: 'correct', optIndex: i }
+                                    }).then(() => { canClick = true; });
+                                }
                             }
-                        }
+                        }, 1000); // تأخير ثانية ليرى اللاعب اللون الأخضر
+
                     } else {
                         sfx.wrong.play();
-                        b.style.background = "var(--danger)";
-                        if(!solo) {
-                            const next = isHost ? data.guest.id : data.host.id;
-                            db.ref('rooms/'+roomID).update({turn: next});
-                        }
+                        b.classList.add('wrong-anim');
+                        
+                        setTimeout(() => {
+                            if(solo) {
+                                nextSoloQ();
+                            } else {
+                                const next = isHost ? data.guest.id : data.host.id;
+                                db.ref('rooms/'+roomID).update({
+                                    turn: next,
+                                    lastAction: { type: 'wrong', optIndex: i }
+                                }).then(() => { canClick = true; });
+                            }
+                        }, 1000); // تأخير ثانية ليرى اللاعب اللون الأحمر
                     }
                 };
                 container.appendChild(b);
@@ -321,7 +354,7 @@
         function showEnd(w) {
             const timeStr = document.getElementById('stopwatch').innerText;
             document.getElementById('end-msg').innerText = "الفائز هو: " + addTag(w);
-            document.getElementById('total-time-result').innerText = "مدة اللعبة: " + timeStr;
+            document.getElementById('total-time-result').innerText = "استغرقت اللعبة: " + timeStr;
             document.getElementById('game-over-modal').style.display = 'flex';
         }
 

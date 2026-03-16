@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>كويز قيم | QUIZ GAME PRO</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root { --main: #6c5ce7; --bg: #0f0c29; --accent: #00d2ff; --white: #ffffff; --success: #00b894; --danger: #ff7675; }
+        * { box-sizing: border-box; font-family: 'Cairo', sans-serif; margin: 0; padding: 0; }
+        body { background: var(--bg); display: flex; justify-content: center; color: var(--white); height: 100vh; overflow: hidden; }
+
+        .screen { width: 100%; max-width: 500px; height: 100vh; background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e); display: none; flex-direction: column; padding: 25px; position: relative; }
+        .active { display: flex; animation: fadeIn 0.4s ease-out; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .logo-container { text-align: center; justify-content: center; align-items: center; }
+        .logo { font-size: 65px; font-weight: 900; background: linear-gradient(to right, #00d2ff, #92fe9d); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.1; margin-bottom: 20px; }
+        
+        input, select { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); padding: 15px; border-radius: 12px; color: white; font-size: 16px; width: 100%; margin-bottom: 15px; outline: none; }
+        button { width: 100%; padding: 15px; background: var(--main); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 18px; margin-bottom: 10px; transition: 0.3s; box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4); }
+
+        #room-code-display { display: none; background: rgba(0, 210, 255, 0.15); border: 1px dashed var(--accent); padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center; }
+        #custom-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #fff; color: #000; padding: 10px 25px; border-radius: 50px; font-weight: bold; z-index: 2000; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+
+        .status-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 15px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); }
+        .player-info { text-align: center; width: 35%; }
+        .p-name { font-size: 11px; color: #aaa; display: block; overflow: hidden; text-overflow: ellipsis; }
+        .score { font-size: 22px; font-weight: 900; color: var(--accent); }
+        .turn-badge { padding: 4px 8px; border-radius: 20px; font-size: 10px; font-weight: bold; text-align: center; width: 30%; position: relative; }
+        .my-turn { background: var(--success); color: #000; }
+        .opp-turn { background: rgba(255,255,255,0.1); color: #aaa; }
+        #game-timer { display: block; font-size: 9px; margin-top: 4px; color: #fff; }
+
+        .question-card { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); min-height: 100px; display: flex; align-items: center; justify-content: center; }
+        .opt-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 10px; margin-bottom: 8px; color: white; cursor: pointer; text-align: right; font-size: 15px; width: 100%; transition: 0.2s; }
+        .opt-btn:hover:not(:disabled) { background: var(--main); }
+
+        .chat-area { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); border-top: 1px solid rgba(255,255,255,0.1); height: 180px; display: flex; flex-direction: column; }
+        #chat-content { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 5px; font-size: 12px; }
+        .msg-line { background: rgba(255,255,255,0.1); padding: 6px 10px; border-radius: 8px; width: fit-content; max-width: 85%; }
+        .chat-box { display: flex; padding: 10px; gap: 8px; background: rgba(0,0,0,0.5); }
+        .chat-box input { margin: 0; padding: 8px; font-size: 13px; border-radius: 8px; flex: 1; }
+        .chat-box button { width: 70px; margin: 0; padding: 8px; font-size: 13px; border-radius: 8px; background: var(--success); color: #000; box-shadow: none; }
+
+        /* تعديل حجم نافذة النهاية لتناسب الشاشة */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 3000; backdrop-filter: blur(8px); padding: 20px; }
+        .modal-content { background: #1a1a2e; padding: 25px; border-radius: 20px; text-align: center; width: 100%; max-width: 350px; border: 2px solid var(--accent); box-sizing: border-box; }
+        .modal-content h2 { font-size: 24px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="custom-toast">تنبيه</div>
+
+    <div id="game-over-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 id="end-title">النتيجة</h2>
+            <p id="end-msg" style="margin: 10px 0; color: #ccc; font-size: 16px;"></p>
+            <p id="total-time" style="font-size: 14px; margin-bottom: 20px; color: var(--accent);"></p>
+            <button onclick="closeModalAndReset()" style="background: var(--accent); color: #000;">العودة للقائمة الرئيسية</button>
+        </div>
+    </div>
+
+    <div id="screen-splash" class="screen active logo-container">
+        <div class="logo">QUIZ<br>GAME</div>
+        <button onclick="sfx.click.play(); showScreen('screen-profile')">دخول اللعبة</button>
+    </div>
+
+    <div id="screen-profile" class="screen">
+        <h2 style="text-align: center; margin-bottom: 20px;">👤 إعداد اللاعب</h2>
+        <input type="text" id="p-name" placeholder="أدخل اسمك المستعار">
+        <button onclick="sfx.click.play(); saveProfile()">حفظ واستمرار</button>
+    </div>
+
+    <div id="screen-menu" class="screen">
+        <h2 id="welcome-txt" style="margin-bottom: 20px;">أهلاً بك</h2>
+        
+        <div id="room-code-display">
+            <span style="display: block; font-size: 12px; color: #aaa;">كود الغرفة:</span>
+            <b id="display-code" style="font-size: 26px; letter-spacing: 3px; color: var(--accent);">----</b>
+            <div style="margin-top: 10px;">
+                <button style="width:auto; padding:5px 20px;" onclick="sfx.click.play(); copyCode()">📋 نسخ</button>
+            </div>
+        </div>
+
+        <select id="game-limit">
+            <option value="10">تحديد المستوى: 10 نقاط</option>
+            <option value="20">تحديد المستوى: 20 نقطة</option>
+            <option value="50">تحديد المستوى: 50 نقطة</option>
+        </select>
+        <button onclick="sfx.click.play(); createNewGame()">➕ إنشاء غرفة جديدة</button>
+        <input type="text" id="join-code" placeholder="أدخل كود الصديق" style="margin-top:20px;">
+        <button style="background: #2d3436;" onclick="sfx.click.play(); joinExistingGame()">🤝 انضمام لغرفة</button>
+    </div>
+
+    <div id="screen-game" class="screen" style="padding: 15px;">
+        <div class="status-bar">
+            <div class="player-info">
+                <span id="my-name" class="p-name">أنت</span>
+                <span id="my-score" class="score">0</span>
+            </div>
+            <div id="turn-indicator" class="turn-badge">
+                <span id="turn-text">...</span>
+                <span id="game-timer">الوقت: 00:00</span>
+            </div>
+            <div class="player-info">
+                <span id="opp-name" class="p-name">الخصم</span>
+                <span id="opp-score" class="score">0</span>
+            </div>
+        </div>
+
+        <div class="question-card"><h3 id="q-text">جاري التحميل...</h3></div>
+        <div id="q-options"></div>
+
+        <div class="chat-area">
+            <div id="chat-content"></div>
+            <div class="chat-box">
+                <input type="text" id="chat-input" placeholder="رسالة..." onkeydown="if(event.key==='Enter') sendMessage()">
+                <button onclick="sendMessage()">إرسال</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const sfx = {
+            click: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
+            correct: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),
+            wrong: new Audio('https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3'),
+            victory: new Audio('https://assets.mixkit.co/active_storage/sfx/2020/2020-preview.mp3')
+        };
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCK_BB_V24ML_mtysxEHZiKOcll9wlPhlg",
+            authDomain: "quizgame-e2f19.firebaseapp.com",
+            databaseURL: "https://quizgame-e2f19-default-rtdb.firebaseio.com",
+            projectId: "quizgame-e2f19",
+            storageBucket: "quizgame-e2f19.firebasestorage.app",
+            messagingSenderId: "568663112844",
+            appId: "1:568663112844:web:de66ced5cf2dfa8fb1cfa9"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let playerInfo = { name: "", id: Math.random().toString(36).substr(2, 9) };
+        let roomID = null, isHost = false, myTurn = false;
+        let timerInterval = null, startTime = null;
+
+        // بنك أسئلة ضخم ومصنف (70 سؤال)
+        const questionsList = [
+            { q: "ما هو العنصر الكيميائي الأكثر وفرة في الكون؟", opts: ["الأكسجين", "الهيدروجين", "الهيليوم", "النيتروجين"], a: 1 },
+            { q: "من هو القائد المسلم الذي فتح الأندلس؟", opts: ["صلاح الدين الأيوبي", "طارق بن زياد", "خالد بن الوليد", "عمرو بن العاص"], a: 1 },
+            { q: "ما هي عاصمة الإمبراطورية البيزنطية؟", opts: ["روما", "أثينا", "القسطنطينية", "الإسكندرية"], a: 2 },
+            { q: "كم عدد صمامات قلب الإنسان؟", opts: ["2", "3", "4", "5"], a: 2 },
+            { q: "أين تقع أعمق نقطة في محيطات العالم؟", opts: ["خندق ماريانا", "خندق تونغا", "خندق بورتوريكو", "خندق جاوة"], a: 0 },
+            { q: "ما هي الدولة التي تسمى أرض الشمس المشرقة؟", opts: ["الصين", "كوريا", "اليابان", "تايلاند"], a: 2 },
+            { q: "ما هي عملة دولة فيتنام؟", opts: ["دونغ", "ين", "بات", "ريال"], a: 0 },
+            { q: "من هو مكتشف الدورة الدموية الكبرى؟", opts: ["ابن النفيس", "ويليام هارفي", "باستير", "أبو بكر الرازي"], a: 1 },
+            { q: "ما هو أصلب مادة طبيعية في الأرض؟", opts: ["الحديد", "الألماس", "الكوارتز", "التيتانيوم"], a: 1 },
+            { q: "كم يبلغ عدد أسنان الشخص البالغ؟", opts: ["28", "30", "32", "34"], a: 2 },
+            { q: "ما هو أكبر كوكب في المجموعة الشمسية؟", opts: ["زحل", "المشتري", "نبتون", "الأرض"], a: 1 },
+            { q: "في أي عام بدأت الحرب العالمية الأولى؟", opts: ["1912", "1914", "1918", "1939"], a: 1 },
+            { q: "من هو الرسام صاحب لوحة 'الموناليزا'؟", opts: ["بيكاسو", "دالي", "دافينشي", "فان جوخ"], a: 2 },
+            { q: "ما هو الغاز الذي تطلقه النباتات في النهار؟", opts: ["ثاني أكسيد الكربون", "الأكسجين", "الهيدروجين", "النيتروجين"], a: 1 },
+            { q: "ما هي أصغر قارة في العالم من حيث المساحة؟", opts: ["أوروبا", "أستراليا", "أفريقيا", "أمريكا الجنوبية"], a: 1 },
+            { q: "من هو مؤلف كتاب 'مقدمة ابن خلدون'؟", opts: ["ابن رشد", "ابن خلدون", "ابن بطوطة", "ابن سينا"], a: 1 },
+            { q: "ما هي الدولة التي فازت بأول مونديال في التاريخ عام 1930؟", opts: ["البرازيل", "الأرجنتين", "الأوروغواي", "إيطاليا"], a: 2 },
+            { q: "ما هو العلم الذي يدرس طبقات الأرض؟", opts: ["الجيولوجيا", "البيولوجيا", "الكيمياء", "الفلك"], a: 0 },
+            { q: "كم عدد ألوان قوس قزح؟", opts: ["5", "6", "7", "8"], a: 2 },
+            { q: "ما هي عاصمة كندا؟", opts: ["تورونتو", "مونتريال", "أوتاوا", "فانكوفر"], a: 2 },
+            { q: "ما هو أطول سور في العالم؟", opts: ["سور برلين", "سور الصين العظيم", "سور القسطنطينية", "سور بغداد"], a: 1 },
+            { q: "ما هو الكوكب الذي يلقب بـ 'توأم الأرض'؟", opts: ["المريخ", "الزهرة", "عطارد", "زحل"], a: 1 },
+            { q: "من هو أول إنسان صعد إلى الفضاء؟", opts: ["نيل أرمسترونج", "يوري غاغارين", "بين آلدن", "أليكسي ليونوف"], a: 1 },
+            { q: "ما هي أكبر صحراء في العالم؟", opts: ["الصحراء الكبرى", "صحراء الربع الخالي", "القارة القطبية الجنوبية", "صحراء غوبي"], a: 2 },
+            { q: "في أي قارة تقع دولة البرازيل؟", opts: ["أمريكا الشمالية", "أمريكا الجنوبية", "أفريقيا", "أوروبا"], a: 1 },
+            { q: "ما هي عاصمة روسيا؟", opts: ["سان بطرسبرج", "موسكو", "كييف", "قازان"], a: 1 },
+            { q: "ما هي العملة المستخدمة في سويسرا؟", opts: ["اليورو", "الجنيه الاسترليني", "الفرنك السويسري", "الدولار"], a: 2 },
+            { q: "كم عدد القلوب لدى الأخطبوط؟", opts: ["1", "2", "3", "4"], a: 2 },
+            { q: "ما هو الاسم العلمي للماء؟", opts: ["CO2", "NaCl", "H2O", "O2"], a: 2 },
+            { q: "من هو مخترع الهاتف؟", opts: ["أديسون", "ألكسندر غراهام بيل", "تسلا", "نيوتن"], a: 1 },
+            { q: "ما هي عاصمة إسبانيا؟", opts: ["برشلونة", "مدريد", "إشبيلية", "فالنسيا"], a: 1 },
+            { q: "ما هو المعدن السائل في درجة حرارة الغرفة؟", opts: ["الحديد", "النحاس", "الزئبق", "الرصاص"], a: 2 },
+            { q: "أين يوجد تمثال الحرية؟", opts: ["واشنطن", "نيويورك", "باريس", "لندن"], a: 1 },
+            { q: "كم عدد القارات في العالم؟", opts: ["5", "6", "7", "8"], a: 2 },
+            { q: "من هي المرأة التي حصلت على جائزتي نوبل في تخصصين؟", opts: ["ماري كوري", "إديث بياف", "أغاثا كريستي", "فلورنس نايتينجيل"], a: 0 },
+            { q: "ما هو أطول نهر في أوروبا؟", opts: ["الدانوب", "الراين", "الفولغا", "السين"], a: 2 },
+            { q: "في أي مدينة يقع مقر الأمم المتحدة؟", opts: ["جنيف", "نيويورك", "باريس", "فيينا"], a: 1 },
+            { q: "ما هو الطائر الذي يضع أكبر بيضة في العالم؟", opts: ["النسر", "النعامة", "البوم", "البجعة"], a: 1 },
+            { q: "من هو صاحب كتاب 'الحاوي' في الطب؟", opts: ["ابن سينا", "أبو بكر الرازي", "ابن النفيس", "الفارابي"], a: 1 },
+            { q: "ما هي الدولة التي لديها أكبر عدد سكان في العالم حالياً؟", opts: ["الصين", "الهند", "أمريكا", "إندونيسيا"], a: 1 },
+            { q: "ما هو أسرع حيوان بري في العالم؟", opts: ["الأسد", "النمر", "الفهد الصياد", "الغزال"], a: 2 },
+            { q: "ما هو البحر الذي يفصل بين قارتي أفريقيا وأوروبا؟", opts: ["البحر الأحمر", "البحر الميت", "البحر المتوسط", "البحر الأسود"], a: 2 },
+            { q: "ما هي عاصمة إيطاليا؟", opts: ["ميلانو", "فينيسيا", "فلورنسا", "روما"], a: 3 },
+            { q: "من هو مكتشف الجاذبية الأرضية؟", opts: ["إينشتاين", "نيوتن", "جاليليو", "أرخميدس"], a: 1 },
+            { q: "ما هو الكوكب الأقرب للشمس؟", opts: ["عطارد", "الزهرة", "المريخ", "الأرض"], a: 0 },
+            { q: "كم عدد العظام في جسم الإنسان البالغ؟", opts: ["200", "206", "210", "215"], a: 1 },
+            { q: "ما هي عاصمة تركيا؟", opts: ["إسطنبول", "أنقرة", "إزمير", "أنطاليا"], a: 1 },
+            { q: "من هو أول من هبط على سطح القمر؟", opts: ["نيل أرمسترونج", "بز ألدرين", "مايكل كولينز", "يوري غاغارين"], a: 0 },
+            { q: "ما هي العملة الرسمية للصين؟", opts: ["ين", "يوان", "وون", "بيزو"], a: 1 },
+            { q: "ما هو العضو المسؤول عن توازن جسم الإنسان؟", opts: ["العين", "الأذن", "الدماغ", "القلب"], a: 1 },
+            { q: "أين تقع غابات الأمازون؟", opts: ["أفريقيا", "آسيا", "أمريكا الجنوبية", "أستراليا"], a: 2 },
+            { q: "كم عدد لاعبي فريق كرة القدم في الملعب؟", opts: ["9", "10", "11", "12"], a: 2 },
+            { q: "ما هو غاز الأوزون؟", opts: ["O2", "O3", "O4", "CO2"], a: 1 },
+            { q: "من هو باني الجامع الأزهر؟", opts: ["صلاح الدين", "جوهر الصقلي", "الظاهر بيبرس", "محمد علي"], a: 1 },
+            { q: "ما هي عاصمة ألمانيا؟", opts: ["ميونخ", "هامبورغ", "برلين", "فرانكفورت"], a: 2 },
+            { q: "ما هو أعلى جبل في العالم؟", opts: ["كي 2", "إفرست", "كلمنجارو", "جبل الشيخ"], a: 1 },
+            { q: "ما هي أصغر دولة في العالم؟", opts: ["موناكو", "الفاتيكان", "سان مارينو", "المالديف"], a: 1 },
+            { q: "من هو مؤلف رواية 'البؤساء'؟", opts: ["شكسبير", "فيكتور هوجو", "تشارلز ديكنز", "تولستوي"], a: 1 },
+            { q: "ما هو أطول عظم في جسم الإنسان؟", opts: ["الساعد", "الجمجمة", "الفخذ", "العمود الفقري"], a: 2 },
+            { q: "ما هي عاصمة البرتغال؟", opts: ["مدريد", "لشبونة", "بورتو", "باريس"], a: 1 },
+            { q: "كم تبلغ سرعة الضوء تقريباً؟", opts: ["150 ألف كم/ث", "200 ألف كم/ث", "300 ألف كم/ث", "500 ألف كم/ث"], a: 2 },
+            { q: "ما هو أكبر حيوان في العالم؟", opts: ["الفيل", "الحوت الأزرق", "القرش", "الديناصور"], a: 1 },
+            { q: "من هو مكتشف قارة أمريكا؟", opts: ["فاسكو دي جاما", "ماجلان", "كريستوفر كولومبوس", "ماركو بولو"], a: 2 },
+            { q: "ما هو الاسم التاريخي لمدينة إسطنبول؟", opts: ["يثرب", "القسطنطينية", "طيبة", "أنطاكية"], a: 1 },
+            { q: "ما هو الفيتامين الذي يتم الحصول عليه من الشمس؟", opts: ["A", "B12", "C", "D"], a: 3 },
+            { q: "ما هي عاصمة اليونان؟", opts: ["نيقوسيا", "روما", "أثينا", "بيروت"], a: 2 },
+            { q: "ما هو الكسوف؟", opts: ["حجب الشمس", "حجب القمر", "انفجار نجمي", "سقوط نيزك"], a: 0 },
+            { q: "كم عدد كواكب المجموعة الشمسية؟", opts: ["7", "8", "9", "10"], a: 1 },
+            { q: "ما هي عاصمة أستراليا؟", opts: ["سيدني", "ميلبورن", "كانبيرا", "بيرث"], a: 2 },
+            { q: "ما هو الحيوان الذي يسمى 'سفينة الصحراء'؟", opts: ["الحصان", "الجمل", "الفيل", "الحمار"], a: 1 }
+        ];
+
+        function showToast(msg) {
+            const t = document.getElementById('custom-toast');
+            t.innerText = msg; t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 2500);
+        }
+
+        function startTimer() {
+            if (timerInterval) return;
+            startTime = Date.now();
+            timerInterval = setInterval(() => {
+                const diff = Math.floor((Date.now() - startTime) / 1000);
+                const m = Math.floor(diff / 60).toString().padStart(2, '0');
+                const s = (diff % 60).toString().padStart(2, '0');
+                document.getElementById('game-timer').innerText = `الوقت: ${m}:${s}`;
+            }, 1000);
+        }
+
+        function copyCode() {
+            navigator.clipboard.writeText(document.getElementById('display-code').innerText);
+            showToast("✅ تم نسخ الكود!");
+        }
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function saveProfile() {
+            playerInfo.name = document.getElementById('p-name').value.trim();
+            if(!playerInfo.name) return showToast("⚠️ اكتب اسمك أولاً");
+            document.getElementById('welcome-txt').innerText = `أهلاً بك ${playerInfo.name}`;
+            showScreen('screen-menu');
+        }
+
+        function createNewGame() {
+            roomID = Math.random().toString(36).substr(2, 5).toUpperCase();
+            isHost = true;
+            document.getElementById('room-code-display').style.display = 'block';
+            document.getElementById('display-code').innerText = roomID;
+            const targetScore = parseInt(document.getElementById('game-limit').value.match(/\d+/)[0]);
+            db.ref('rooms/' + roomID).set({
+                host: playerInfo, turn: playerInfo.id, qIndex: 0,
+                scores: { [playerInfo.id]: 0 }, status: "waiting", limit: targetScore,
+                qOrder: questionsList.map((_, i) => i).sort(() => Math.random() - 0.5)
+            });
+            listenToRoom();
+        }
+
+        function joinExistingGame() {
+            roomID = document.getElementById('join-code').value.toUpperCase().trim();
+            if(!roomID) return showToast("⚠️ أدخل الكود");
+            db.ref('rooms/' + roomID).once('value', snapshot => {
+                if(snapshot.exists()) {
+                    isHost = false;
+                    db.ref('rooms/' + roomID + '/guest').set(playerInfo);
+                    db.ref('rooms/' + roomID + '/scores/' + playerInfo.id).set(0);
+                    db.ref('rooms/' + roomID + '/status').set("playing");
+                    listenToRoom();
+                } else { showToast("❌ كود خاطئ"); }
+            });
+        }
+
+        function listenToRoom() {
+            db.ref('rooms/' + roomID).on('value', snapshot => {
+                const data = snapshot.val(); if(!data) return;
+                document.getElementById('my-name').innerText = playerInfo.name;
+                if(data.guest && data.host) {
+                    const opp = (isHost) ? data.guest : data.host;
+                    document.getElementById('opp-name').innerText = opp.name;
+                }
+                if(data.status === "finished") { 
+                    clearInterval(timerInterval);
+                    showEndModal(data.winnerName); 
+                    return; 
+                }
+                if(data.status === "playing") {
+                    if(!document.getElementById('screen-game').classList.contains('active')) showScreen('screen-game');
+                    startTimer();
+                }
+                if(data.scores) {
+                    Object.keys(data.scores).forEach(id => {
+                        document.getElementById(id === playerInfo.id ? 'my-score' : 'opp-score').innerText = data.scores[id];
+                    });
+                }
+                myTurn = (data.turn === playerInfo.id);
+                const ind = document.getElementById('turn-indicator');
+                document.getElementById('turn-text').innerText = myTurn ? "دورك الآن ⚡" : "انتظر الخصم";
+                ind.className = "turn-badge " + (myTurn ? "my-turn" : "opp-turn");
+
+                if(data.qOrder && data.status === "playing") {
+                    const q = questionsList[data.qOrder[data.qIndex % questionsList.length]];
+                    updateUI(q);
+                }
+            });
+
+            db.ref('chats/' + roomID).on('child_added', s => {
+                const m = s.val();
+                const d = document.createElement('div'); d.className = "msg-line";
+                const isMe = m.user === playerInfo.name;
+                d.style.alignSelf = isMe ? "flex-start" : "flex-end";
+                d.style.background = isMe ? "rgba(108, 92, 231, 0.3)" : "rgba(255,255,255,0.1)";
+                d.innerHTML = `<b style="color:var(--accent); font-size:10px;">${m.user}</b><br>${m.text}`;
+                const content = document.getElementById('chat-content');
+                content.appendChild(d); content.scrollTop = content.scrollHeight;
+            });
+        }
+
+        function updateUI(q) {
+            document.getElementById('q-text').innerText = q.q;
+            const container = document.getElementById('q-options'); container.innerHTML = "";
+            q.opts.forEach((opt, i) => {
+                const b = document.createElement('button'); b.className = "opt-btn";
+                b.innerText = opt; b.disabled = !myTurn;
+                b.onclick = () => {
+                    sfx.click.play();
+                    if(i === q.a) {
+                        sfx.correct.play();
+                        showToast("✅ إجابة صحيحة!");
+                        db.ref('rooms/' + roomID).once('value', snap => {
+                            const rd = snap.val(); const ns = (rd.scores[playerInfo.id] || 0) + 1;
+                            db.ref('rooms/' + roomID + '/scores/' + playerInfo.id).set(ns);
+                            if(ns >= rd.limit) db.ref('rooms/' + roomID).update({ status: "finished", winnerName: playerInfo.name });
+                            else db.ref('rooms/' + roomID + '/qIndex').transaction(x => (x || 0) + 1);
+                        });
+                    } else {
+                        sfx.wrong.play();
+                        showToast("❌ إجابة خاطئة!");
+                        db.ref('rooms/' + roomID).once('value', snap => {
+                            const d = snap.val(); const next = isHost ? (d.guest ? d.guest.id : d.host.id) : d.host.id;
+                            db.ref('rooms/' + roomID + '/turn').set(next);
+                        });
+                    }
+                };
+                container.appendChild(b);
+            });
+        }
+
+        function sendMessage() {
+            const inp = document.getElementById('chat-input');
+            if(!inp.value.trim()) return; sfx.click.play();
+            db.ref('chats/' + roomID).push({ user: playerInfo.name, text: inp.value });
+            inp.value = "";
+        }
+
+        function showEndModal(winnerName) {
+            db.ref('rooms/' + roomID).off(); db.ref('chats/' + roomID).off();
+            sfx.victory.play();
+            const isWin = winnerName === playerInfo.name;
+            document.getElementById('end-title').innerText = isWin ? "🏆 مبروك الفوز!" : "💔 حظاً أوفر";
+            document.getElementById('end-msg').innerText = isWin ? "أداء رائع!" : `الفائز هو: ${winnerName}`;
+            document.getElementById('total-time').innerText = "مدة اللعب: " + document.getElementById('game-timer').innerText.replace("الوقت: ", "");
+            document.getElementById('game-over-modal').style.display = 'flex';
+        }
+
+        function closeModalAndReset() {
+            sfx.click.play(); location.reload();
+        }
+    </script>
+</body>
+</html>

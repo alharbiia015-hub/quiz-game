@@ -35,7 +35,10 @@
         .my-turn { background: var(--success); color: #000; }
         .opp-turn { background: rgba(255,255,255,0.1); color: #aaa; }
 
-        .question-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; text-align: center; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1); min-height: 80px; display: flex; align-items: center; justify-content: center; }
+        /* تعديل لون السؤال ليكون أبيض فقط */
+        .question-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; text-align: center; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1); min-height: 80px; display: flex; align-items: center; justify-content: center; color: #ffffff !important; }
+        .question-card h3 { color: #ffffff !important; }
+
         #q-options { flex: 1; overflow-y: auto; margin-bottom: 10px; padding-right: 5px; }
         .opt-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 10px; margin-bottom: 8px; color: white; width: 100%; text-align: right; font-size: 14px; }
 
@@ -43,11 +46,11 @@
         #chat-content { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 5px; font-size: 12px; }
         .msg-line { background: rgba(255,255,255,0.1); padding: 6px 10px; border-radius: 8px; width: fit-content; max-width: 80%; color: #fff; }
         .chat-box { display: flex; padding: 10px; gap: 8px; background: rgba(0,0,0,0.4); }
-        .chat-box input { margin: 0; padding: 8px; font-size: 13px; flex: 1; height: 40px; }
+        .chat-box input { margin: 0; padding: 8px; font-size: 13px; flex: 1; height: 40px; color: white; }
         .chat-box button { width: 70px; padding: 0; height: 40px; font-size: 13px; background: var(--success); color: #000; }
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 4000; padding: 20px; backdrop-filter: blur(5px); }
-        .modal-content { background: #1a1a2e; padding: 25px; border-radius: 20px; text-align: center; width: 100%; max-width: 320px; border: 2px solid var(--accent); }
+        .modal-content { background: #1a1a2e; padding: 25px; border-radius: 20px; text-align: center; width: 100%; max-width: 320px; border: 2px solid var(--accent); color: white; }
     </style>
 </head>
 <body>
@@ -69,13 +72,13 @@
     </div>
 
     <div id="screen-profile" class="screen" style="justify-content: center;">
-        <h2 style="text-align: center; margin-bottom: 20px;">👤 إعداد اللاعب</h2>
+        <h2 style="text-align: center; margin-bottom: 20px; color: white;">👤 إعداد اللاعب</h2>
         <input type="text" id="p-name" placeholder="أدخل اسمك المستعار">
         <button onclick="sfx.click.play(); saveProfile()">حفظ واستمرار</button>
     </div>
 
     <div id="screen-menu" class="screen" style="justify-content: center;">
-        <h2 id="welcome-txt" style="margin-bottom: 20px; text-align: center;">أهلاً بك</h2>
+        <h2 id="welcome-txt" style="margin-bottom: 20px; text-align: center; color: white;">أهلاً بك</h2>
         <div id="room-code-display" style="display:none; text-align:center; margin-bottom:15px; padding:15px; border:1px dashed var(--accent); border-radius:12px; background: rgba(0,210,255,0.05);">
             <span style="font-size: 12px; color: #aaa;">كود الغرفة</span><br>
             <b id="display-code" style="font-size: 28px; color: var(--accent); letter-spacing: 2px;">----</b>
@@ -101,7 +104,7 @@
             </div>
             <div style="text-align:center; width: 30%;"><span id="opp-name" style="font-size:10px; color:#aaa; display:block; overflow:hidden;">الخصم</span><span id="opp-score" class="score">0</span></div>
         </div>
-        <div class="question-card"><h3 id="q-text" style="font-size: 16px;">جاري التحميل...</h3></div>
+        <div class="question-card"><h3 id="q-text" style="font-size: 16px; color: white;">جاري التحميل...</h3></div>
         <div id="q-options"></div>
         <div class="chat-area">
             <div id="chat-content"></div>
@@ -113,7 +116,7 @@
     </div>
 
     <script>
-        // بنك الأسئلة الـ 70 كامل
+        // بنك الأسئلة (نفس الأسئلة الـ 70)
         const questionsList = [
             { q: "ما هو العنصر الكيميائي الأكثر وفرة في الكون؟", opts: ["الأكسجين", "الهيدروجين", "الهيليوم", "النيتروجين"], a: 1 },
             { q: "من هو القائد المسلم الذي فتح الأندلس؟", opts: ["صلاح الدين الأيوبي", "طارق بن زياد", "خالد بن الوليد", "عمرو بن العاص"], a: 1 },
@@ -153,7 +156,7 @@
             { q: "ما هو أطول نهر في أوروبا؟", opts: ["الدانوب", "الراين", "الفولغا", "السين"], a: 2 },
             { q: "في أي مدينة يقع مقر الأمم المتحدة؟", opts: ["جنيف", "نيويورك", "باريس", "فيينا"], a: 1 },
             { q: "ما هو الطائر الذي يضع أكبر بيضة في العالم؟", opts: ["النسر", "النعامة", "البوم", "البجعة"], a: 1 },
-            { q: "من هو صاحب كتاب 'الحاوي' في الطب؟", opts: ["ابن سينا", "أبو بكر الرازي", "ابن النفيس", "الفارابي"], a: 1 },
+            { q: "من هو صاحب كتاب 'الحاوي' في الطب? ", opts: ["ابن سينا", "أبو بكر الرازي", "ابن النفيس", "الفارابي"], a: 1 },
             { q: "ما هي الدولة التي لديها أكبر عدد سكان في العالم حالياً؟", opts: ["الصين", "الهند", "أمريكا", "إندونيسيا"], a: 1 },
             { q: "ما هو أسرع حيوان بري في العالم؟", opts: ["الأسد", "النمر", "الفهد الصياد", "الغزال"], a: 2 },
             { q: "ما هو البحر الذي يفصل بين قارتي أفريقيا وأوروبا؟", opts: ["البحر الأحمر", "البحر الميت", "البحر المتوسط", "البحر الأسود"], a: 2 },
@@ -187,7 +190,6 @@
             { q: "ما هو الحيوان الذي يسمى 'سفينة الصحراء'؟", opts: ["الحصان", "الجمل", "الفيل", "الحمار"], a: 1 }
         ];
 
-        // الأصوات
         const sfx = {
             click: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
             correct: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),

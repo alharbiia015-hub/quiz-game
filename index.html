@@ -48,6 +48,9 @@
         
         /* زر الرجوع الخاص باللعب الفردي */
         #back-btn-solo { display: none; width: fit-content; padding: 5px 15px; font-size: 12px; background: var(--danger); margin: 0 auto 10px auto; }
+        
+        /* شريط الكود الثابت للعب الجماعي */
+        #room-code-header { display: none; justify-content: space-between; align-items: center; margin-bottom: 10px; background: rgba(0,0,0,0.3); padding: 8px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); }
     </style>
 </head>
 <body>
@@ -91,6 +94,12 @@
 
     <div id="screen-game" class="screen">
         <button id="back-btn-solo" onclick="location.reload()">⬅️ خروج</button>
+        
+        <div id="room-code-header">
+            <span style="color: white; font-size: 14px; font-weight: bold;">كود الغرفة: <span id="display-room-code" style="color: var(--accent); letter-spacing: 1px;"></span></span>
+            <button onclick="copyRoomCode()" style="width: auto; padding: 6px 12px; font-size: 12px; margin: 0; background: rgba(255,255,255,0.1);">نسخ 📋</button>
+        </div>
+
         <div class="status-bar">
             <div style="text-align:center; width: 30%;"><span id="my-name" style="font-size:10px; color:#aaa;">أنت</span><br><span id="my-score" class="score">0</span></div>
             <div id="turn-indicator" class="turn-badge">
@@ -276,11 +285,22 @@
             showScreen('screen-menu');
         }
 
+        function copyRoomCode() {
+            if(roomID) {
+                navigator.clipboard.writeText(roomID).then(() => {
+                    showToast("✅ تم نسخ الكود!");
+                }).catch(err => {
+                    showToast("❌ فشل النسخ");
+                });
+            }
+        }
+
         // --- نمط اللعب الفردي ---
         function startSoloMode() {
             isSolo = true;
             document.getElementById('opp-ui').style.visibility = 'hidden';
             document.getElementById('chat-ui').style.display = 'none';
+            document.getElementById('room-code-header').style.display = 'none'; // إخفاء الكود
             document.getElementById('back-btn-solo').style.display = 'block'; // إظهار زر الرجوع
             document.getElementById('turn-text').innerText = "وضع التدريب 🎯";
             showScreen('screen-game');
@@ -303,7 +323,11 @@
                 qIndex: Math.floor(Math.random() * questionsList.length),
                 scores: { [playerInfo.id]: 0 }
             });
-            showToast("كود الغرفة: " + roomID);
+            
+            // إظهار شريط الكود الثابت
+            document.getElementById('display-room-code').innerText = roomID;
+            document.getElementById('room-code-header').style.display = 'flex';
+            
             listenToRoom();
         }
 
@@ -316,6 +340,11 @@
                 if(s.exists()) {
                     db.ref('rooms/' + roomID + '/guest').set(playerInfo);
                     db.ref('rooms/' + roomID + '/status').set("playing");
+                    
+                    // إظهار شريط الكود الثابت
+                    document.getElementById('display-room-code').innerText = roomID;
+                    document.getElementById('room-code-header').style.display = 'flex';
+                    
                     listenToRoom();
                 } else showToast("❌ الكود خاطئ");
             });

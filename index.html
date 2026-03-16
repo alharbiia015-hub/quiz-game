@@ -45,6 +45,9 @@
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 4000; }
         .modal-content { background: #1a1a2e; padding: 25px; border-radius: 20px; text-align: center; width: 320px; border: 2px solid var(--accent); color: white; }
+        
+        /* زر الرجوع الخاص باللعب الفردي */
+        #back-btn-solo { display: none; width: fit-content; padding: 5px 15px; font-size: 12px; background: var(--danger); margin: 0 auto 10px auto; }
     </style>
 </head>
 <body>
@@ -87,6 +90,7 @@
     </div>
 
     <div id="screen-game" class="screen">
+        <button id="back-btn-solo" onclick="location.reload()">⬅️ خروج</button>
         <div class="status-bar">
             <div style="text-align:center; width: 30%;"><span id="my-name" style="font-size:10px; color:#aaa;">أنت</span><br><span id="my-score" class="score">0</span></div>
             <div id="turn-indicator" class="turn-badge">
@@ -106,7 +110,6 @@
     </div>
 
     <script>
-        // 120 سؤال جديد وصعب
         const questionsList = [
             { q: "ما هو العنصر الذي يرمز له بالرمز (Au)؟", opts: ["الفضة", "النحاس", "الذهب", "الحديد"], a: 2 },
             { q: "من هو الفيلسوف الذي لقب بـ (المعلم الأول)؟", opts: ["أفلاطون", "سقراط", "أرسطو", "ابن رشد"], a: 2 },
@@ -278,6 +281,7 @@
             isSolo = true;
             document.getElementById('opp-ui').style.visibility = 'hidden';
             document.getElementById('chat-ui').style.display = 'none';
+            document.getElementById('back-btn-solo').style.display = 'block'; // إظهار زر الرجوع
             document.getElementById('turn-text').innerText = "وضع التدريب 🎯";
             showScreen('screen-game');
             loadSoloQuestion();
@@ -291,6 +295,7 @@
         // --- نمط اللعب الجماعي ---
         function createNewGame() {
             isSolo = false; isHost = true;
+            document.getElementById('back-btn-solo').style.display = 'none';
             roomID = Math.random().toString(36).substr(2, 5).toUpperCase();
             const limit = parseInt(document.getElementById('game-limit').value);
             db.ref('rooms/' + roomID).set({
@@ -304,6 +309,7 @@
 
         function joinExistingGame() {
             isSolo = false; isHost = false;
+            document.getElementById('back-btn-solo').style.display = 'none';
             roomID = document.getElementById('join-code').value.toUpperCase().trim();
             if(!roomID) return showToast("⚠️ أدخل الكود");
             db.ref('rooms/' + roomID).once('value', s => {
@@ -353,10 +359,12 @@
                     sfx.click.play();
                     if(i === q.a) {
                         sfx.correct.play();
+                        b.style.background = "var(--success)"; // تلوين الخيار الصحيح
                         if(solo) {
                             document.getElementById('my-score').innerText = parseInt(document.getElementById('my-score').innerText) + 1;
                             showToast("✅ صح!");
-                            setTimeout(loadSoloQuestion, 1000);
+                            // في اللعب الفردي: لا ينتقل للسؤال التالي إلا بعد الاختيار الصحيح
+                            setTimeout(loadSoloQuestion, 800);
                         } else {
                             const newS = (data.scores[playerInfo.id] || 0) + 1;
                             if(newS >= data.limit) {
@@ -369,9 +377,10 @@
                         }
                     } else {
                         sfx.wrong.play();
+                        b.style.background = "var(--danger)"; // تلوين الخيار الخطأ
                         if(solo) {
-                            showToast("❌ خطأ!");
-                            setTimeout(loadSoloQuestion, 1000);
+                            showToast("❌ خطأ! حاول مجدداً");
+                            // في اللعب الفردي: لا نفعل شيء، ننتظر أن يختار الإجابة الصحيحة
                         } else {
                             const next = isHost ? (data.guest ? data.guest.id : data.host.id) : data.host.id;
                             db.ref('rooms/' + roomID).update({ turn: next });

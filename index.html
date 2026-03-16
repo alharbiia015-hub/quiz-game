@@ -12,42 +12,29 @@
     <style>
         :root { --main: #6c5ce7; --bg: #0f0c29; --accent: #00d2ff; --white: #ffffff; --success: #00b894; --danger: #ff7675; }
         * { box-sizing: border-box; font-family: 'Cairo', sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        
         html, body { background: var(--bg); height: 100%; overflow: hidden; width: 100%; position: fixed; }
-
         .screen { width: 100%; max-width: 500px; height: 100%; background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e); display: none; flex-direction: column; padding: 20px; position: relative; margin: 0 auto; }
         .active { display: flex; }
-
         .logo { font-size: 60px; font-weight: 900; background: linear-gradient(to right, #00d2ff, #92fe9d); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; margin-top: 30px; line-height: 1; }
-        
         input, select { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); padding: 12px; border-radius: 12px; color: white; width: 100%; margin-bottom: 10px; outline: none; font-size: 16px; }
         button { width: 100%; padding: 14px; background: var(--main); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
-
         #custom-toast { position: fixed; top: 40px; left: 50%; transform: translateX(-50%); background: #fff; color: #000; padding: 8px 20px; border-radius: 50px; font-weight: bold; z-index: 5000; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-
         .status-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 15px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1); }
         .score { font-size: 22px; font-weight: 900; color: var(--accent); }
         .turn-badge { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; text-align: center; min-width: 80px; }
         .my-turn { background: var(--success); color: #000; }
         .opp-turn { background: rgba(255,255,255,0.1); color: #aaa; }
-
-        .question-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; text-align: center; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1); min-height: 80px; display: flex; align-items: center; justify-content: center; color: #ffffff !important; }
-        
-        #q-options { flex: 1; overflow-y: auto; margin-bottom: 10px; padding-right: 5px; }
-        .opt-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 10px; margin-bottom: 8px; color: white; width: 100%; text-align: right; font-size: 14px; transition: 0.3s; }
-
-        .chat-area { height: 160px; background: rgba(0,0,0,0.5); border-radius: 15px 15px 0 0; display: flex; flex-direction: column; border-top: 1px solid rgba(255,255,255,0.1); margin: 0 -20px; margin-top: auto; padding-bottom: env(safe-area-inset-bottom); }
+        .question-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; text-align: center; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1); min-height: 80px; display: flex; align-items: center; justify-content: center; color: #ffffff; }
+        #q-options { flex: 1; overflow-y: auto; margin-bottom: 10px; }
+        .opt-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 10px; margin-bottom: 8px; color: white; width: 100%; text-align: right; font-size: 14px; }
+        .chat-area { height: 160px; background: rgba(0,0,0,0.5); border-radius: 15px 15px 0 0; display: flex; flex-direction: column; margin: 0 -20px; padding-bottom: env(safe-area-inset-bottom); }
         #chat-content { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 5px; font-size: 12px; }
         .msg-line { background: rgba(255,255,255,0.1); padding: 6px 10px; border-radius: 8px; width: fit-content; max-width: 80%; color: #fff; }
         .chat-box { display: flex; padding: 10px; gap: 8px; background: rgba(0,0,0,0.4); }
-        .chat-box input { margin: 0; padding: 8px; font-size: 13px; flex: 1; height: 40px; color: white; }
-        .chat-box button { width: 70px; padding: 0; height: 40px; font-size: 13px; background: var(--success); color: #000; }
-
+        .chat-box input { margin: 0; padding: 8px; flex: 1; height: 40px; }
+        .chat-box button { width: 70px; height: 40px; background: var(--success); color: #000; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 4000; }
         .modal-content { background: #1a1a2e; padding: 25px; border-radius: 20px; text-align: center; width: 320px; border: 2px solid var(--accent); color: white; }
-        
-        /* زر الرجوع الخاص باللعب الفردي */
-        #back-btn-solo { display: none; width: fit-content; padding: 5px 15px; font-size: 12px; background: var(--danger); margin: 0 auto 10px auto; }
     </style>
 </head>
 <body>
@@ -64,49 +51,44 @@
 
     <div id="screen-splash" class="screen active" style="justify-content: center;">
         <div class="logo">QUIZ<br>GAME</div>
-        <button onclick="sfx.click.play(); showScreen('screen-profile')">دخول اللعبة</button>
+        <button onclick="showScreen('screen-profile')">دخول اللعبة</button>
     </div>
 
     <div id="screen-profile" class="screen" style="justify-content: center;">
-        <h2 style="text-align: center; margin-bottom: 20px; color: white;">👤 إعداد اللاعب</h2>
+        <h2 style="text-align: center; color: white; margin-bottom: 20px;">👤 إعداد اللاعب</h2>
         <input type="text" id="p-name" placeholder="أدخل اسمك المستعار">
-        <button onclick="sfx.click.play(); saveProfile()">حفظ واستمرار</button>
+        <button onclick="saveProfile()">حفظ واستمرار</button>
     </div>
 
     <div id="screen-menu" class="screen" style="justify-content: center;">
-        <h2 id="welcome-txt" style="margin-bottom: 20px; text-align: center; color: white;"></h2>
-        <div id="online-section">
-            <select id="game-limit">
-                <option value="10">تحديد المستوى: 10 نقاط</option>
-                <option value="20">تحديد المستوى: 20 نقطة</option>
-            </select>
-            <button onclick="sfx.click.play(); createNewGame()">➕ إنشاء غرفة جديدة</button>
-            
-            <div id="host-waiting-area" style="display: none; background: rgba(0,0,0,0.4); padding: 15px; border-radius: 12px; margin-top: 10px; border: 1px solid var(--accent); text-align: center;">
-                <p style="color: white; margin-bottom: 10px; font-size: 14px;">بانتظار انضمام الصديق ⏳</p>
-                <div style="font-size: 22px; font-weight: bold; color: var(--accent); letter-spacing: 2px; margin-bottom: 10px;" id="display-menu-code"></div>
-                <button onclick="copyRoomCode()" style="background: rgba(255,255,255,0.1); padding: 8px; font-size: 14px; width: 100%;">نسخ الكود 📋</button>
-            </div>
-
-            <div style="height: 10px;"></div>
-            <input type="text" id="join-code" placeholder="أدخل كود الصديق">
-            <button style="background: #2d3436;" onclick="sfx.click.play(); joinExistingGame()">🤝 انضمام لغرفة</button>
+        <h2 id="welcome-txt" style="text-align: center; color: white; margin-bottom: 20px;"></h2>
+        <select id="game-limit">
+            <option value="10">تحديد المستوى: 10 نقاط</option>
+            <option value="20">تحديد المستوى: 20 نقطة</option>
+        </select>
+        <button onclick="createNewGame()">➕ إنشاء غرفة جديدة</button>
+        
+        <div id="host-wait" style="display: none; background: rgba(0,0,0,0.4); padding: 15px; border-radius: 12px; margin-top: 10px; border: 1px solid var(--accent); text-align: center;">
+            <p style="color: #aaa; font-size: 12px;">كود الغرفة (أرسله لصديقك):</p>
+            <div id="display-menu-code" style="font-size: 24px; font-weight: 900; color: var(--accent); margin: 5px 0;"></div>
+            <button onclick="copyRoomCode()" style="background: rgba(255,255,255,0.1); font-size: 12px; padding: 8px;">نسخ الكود 📋</button>
         </div>
+
+        <div style="height: 15px;"></div>
+        <input type="text" id="join-code" placeholder="أدخل كود الصديق">
+        <button style="background: #2d3436;" onclick="joinExistingGame()">🤝 انضمام لغرفة</button>
         <hr style="margin: 20px 0; opacity: 0.1;">
-        <button style="background: var(--success); color: #000;" onclick="sfx.click.play(); startSoloMode()">🕹️ لعب بمفردك</button>
+        <button style="background: var(--success); color: #000;" onclick="startSoloMode()">🕹️ لعب بمفردك</button>
     </div>
 
     <div id="screen-game" class="screen">
-        <button id="back-btn-solo" onclick="location.reload()">⬅️ خروج</button>
-        
+        <button id="back-solo" onclick="location.reload()" style="display:none; width:auto; padding:5px 15px; margin-bottom:10px; background:var(--danger);">خروج</button>
         <div class="status-bar">
-            <div style="text-align:center; width: 30%;"><span id="my-name" style="font-size:10px; color:#aaa;">أنت</span><br><span id="my-score" class="score">0</span></div>
-            <div id="turn-indicator" class="turn-badge">
-                <span id="turn-text">...</span>
-            </div>
-            <div id="opp-ui" style="text-align:center; width: 30%;"><span id="opp-name" style="font-size:10px; color:#aaa;">الخصم</span><br><span id="opp-score" class="score">0</span></div>
+            <div style="text-align:center;"><span id="my-name-ui" style="font-size:10px; color:#aaa;">أنت</span><br><span id="my-score" class="score">0</span></div>
+            <div id="turn-indicator" class="turn-badge"><span id="turn-text">...</span></div>
+            <div id="opp-ui" style="text-align:center;"><span id="opp-name" style="font-size:10px; color:#aaa;">الخصم</span><br><span id="opp-score" class="score">0</span></div>
         </div>
-        <div class="question-card"><h3 id="q-text" style="font-size: 16px; color: white;">جاري التحميل...</h3></div>
+        <div class="question-card"><h3 id="q-text">جاري التحميل...</h3></div>
         <div id="q-options"></div>
         <div id="chat-ui" class="chat-area">
             <div id="chat-content"></div>
@@ -118,102 +100,178 @@
     </div>
 
     <script>
+        // دالة التاج
+        function addTag(n) { 
+            if(!n) return "";
+            return (n.toLowerCase() === 'asoo' || n === 'أسو') ? n + ' 👑' : n; 
+        }
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCK_BB_V24ML_mtysxEHZiKOcll9wlPhlg",
+            authDomain: "quizgame-e2f19.firebaseapp.com",
+            databaseURL: "https://quizgame-e2f19-default-rtdb.firebaseio.com",
+            projectId: "quizgame-e2f19",
+            storageBucket: "quizgame-e2f19.firebasestorage.app",
+            messagingSenderId: "568663112844",
+            appId: "1:568663112844:web:de66ced5cf2dfa8fb1cfa9"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let pInfo = { name: "", id: Math.random().toString(36).substr(2, 9) };
+        let roomID = null, isHost = false, isSolo = false;
+
         const questionsList = [
-            { q: "ما هو العنصر الذي يرمز له بالرمز (Au)؟", opts: ["الفضة", "النحاس", "الذهب", "الحديد"], a: 2 },
-            { q: "من هو الفيلسوف الذي لقب بـ (المعلم الأول)؟", opts: ["أفلاطون", "سقراط", "أرسطو", "ابن رشد"], a: 2 },
-            { q: "ما هي عاصمة كازاخستان؟", opts: ["أستانا", "ألماتي", "باكو", "عشق آباد"], a: 0 },
-            { q: "كم عدد فقرات عنق الزرافة؟", opts: ["7", "14", "21", "28"], a: 0 },
-            { q: "ما هو أطول جسر بحري في العالم؟", opts: ["جسر الملك فهد", "جسر هايوان كو", "جسر سان فرانسيسكو", "جسر لويزيانا"], a: 1 },
-            { q: "في أي سنة انتهت الخلافة العثمانية رسمياً؟", opts: ["1920", "1922", "1924", "1930"], a: 2 },
-            { q: "ما هو الكوكب الذي يطلق عليه 'الكوكب المائل'؟", opts: ["نبتون", "أورانوس", "زحل", "عطارد"], a: 1 },
-            { q: "ما هو أصلب عضو في جسم الإنسان؟", opts: ["عظمة الفخذ", "الجمجمة", "مينا الأسنان", "العمود الفقري"], a: 2 },
-            { q: "من هو مخترع لغة البرمجة (Python)؟", opts: ["بيل جيتس", "جايدو روسم", "مارك زوكربيرج", "ستيف جوبز"], a: 1 },
-            { q: "ما هي الدولة التي تمتلك أكبر عدد من الأهرامات؟", opts: ["مصر", "المكسيك", "السودان", "بيرو"], a: 2 },
-            { q: "كم يبلغ عرض نفق المانش؟", opts: ["30 كم", "50 كم", "70 كم", "100 كم"], a: 1 },
-            { q: "ما هي المادة التي يتكون منها قرن وحيد القرن؟", opts: ["العظم", "الكيراتين", "العاج", "الغضروف"], a: 1 },
-            { q: "ما هي أسرع حشرة في العالم؟", opts: ["اليعسوب", "الصرصور", "النحلة", "الخنفساء النمرة"], a: 3 },
-            { q: "من هو أول من اكتشف ضغط الدم؟", opts: ["ستيفن هيلز", "لويس باستير", "ابن النفيس", "ويليام هارفي"], a: 0 },
-            { q: "في أي مدينة توجد لوحة 'العشاء الأخير'؟", opts: ["روما", "باريس", "ميلانو", "فلورنسا"], a: 2 },
-            { q: "ما هو الغاز الذي يشكل 78% من هواء الأرض؟", opts: ["الأكسجين", "النيتروجين", "الهيدروجين", "الأرجون"], a: 1 },
-            { q: "كم استغرقت 'حرب المائة عام' فعلياً؟", opts: ["100 عام", "99 عام", "116 عام", "125 عام"], a: 2 },
-            { q: "ما هي أصغر دولة في العالم؟", opts: ["موناكو", "الفاتيكان", "سان مارينو", "ناورو"], a: 1 },
-            { q: "ما هو المعدن السائل الوحيد؟", opts: ["البروم", "الزئبق", "الجاليوم", "السيزيوم"], a: 1 },
-            { q: "كم يبلغ عدد أسنان البعوضة؟", opts: ["لا تملك", "22 سن", "47 سن", "100 سن"], a: 2 },
-            { q: "من هو صاحب كتاب 'الحاوي'؟", opts: ["ابن سينا", "أبو بكر الرازي", "ابن رشد", "ابن زهر"], a: 1 },
-            { q: "ما هي عاصمة إيسلندا؟", opts: ["ريكيافيك", "أوسلو", "هلسنكي", "برن"], a: 0 },
-            { q: "ما هو البحر الذي أطلق عليه 'بحر الروم'؟", opts: ["الأحمر", "الأسود", "المتوسط", "الميت"], a: 2 },
-            { q: "ما هو الحيوان الأبكم الذي لا صوت له؟", opts: ["الزرافة", "الدلفين", "السلحفاة", "الكنغر"], a: 0 },
-            { q: "في أي عام تم إطلاق (سبوتنيك)؟", opts: ["1950", "1957", "1961", "1969"], a: 1 },
-            { q: "من هو مؤسس علم الاجتماع؟", opts: ["أرسطو", "ابن خلدون", "سقراط", "ماكيافيلي"], a: 1 },
-            { q: "كم عدد أذرع الأخطبوط؟", opts: ["6", "8", "10", "12"], a: 1 },
-            { q: "ما هو العضو الذي يستهلك 20% من أكسجين الجسم؟", opts: ["القلب", "الرئتين", "الدماغ", "الكبد"], a: 2 },
-            { q: "ما هي الدولة 'أرض الألف بحيرة'؟", opts: ["السويد", "النرويج", "فنلندا", "كندا"], a: 2 },
-            { q: "ما هو أطول أنهار آسيا؟", opts: ["الغانج", "اليانغتسي", "السند", "الفرات"], a: 1 },
-            { q: "من هو مخترع الراديو؟", opts: ["ماركوني", "إديسون", "تسلا", "بيل"], a: 0 },
-            { q: "ما هي عملة اليابان؟", opts: ["اليوان", "الين", "الوون", "البات"], a: 1 },
-            { q: "كم يبلغ عدد لاعبي فريق كرة اليد؟", opts: ["5", "6", "7", "11"], a: 2 },
-            { q: "ما هي السورة 'الفاضحة'؟", opts: ["التوبة", "المنافقون", "الأحزاب", "الحشر"], a: 0 },
-            { q: "ما هي أكبر جزيرة في المتوسط؟", opts: ["قبرص", "كريت", "صقلية", "سردينيا"], a: 2 },
-            { q: "أين تقع صحراء أتاكاما؟", opts: ["أفريقيا", "آسيا", "أمريكا الجنوبية", "أستراليا"], a: 2 },
-            { q: "كم عدد القلوب لدى دودة الأرض؟", opts: ["1", "3", "5", "10"], a: 2 },
-            { q: "ما هو الطائر الذي يضع أكبر بيضة؟", opts: ["النعامة", "النسر", "البجعة", "الإيمو"], a: 0 },
-            { q: "من هو أول من رسم خريطة للعالم؟", opts: ["الإدريسي", "ابن بطوطة", "كولومبوس", "دي جاما"], a: 0 },
-            { q: "ما هو وقود الصواريخ المسال؟", opts: ["النيتروجين", "الهيدروجين", "الأكسجين", "الأرجون"], a: 1 },
-            { q: "ما هو الاسم العلمي لمرض 'السل'؟", opts: ["تيفويد", "درن", "كوليرا", "إنفلونزا"], a: 1 },
-            { q: "من هي التي فازت بنوبل مرتين؟", opts: ["ماري كوري", "ملالا", "ميركل", "غاندي"], a: 0 },
-            { q: "في أي سنة تم توحيد السعودية؟", opts: ["1925", "1930", "1932", "1935"], a: 2 },
-            { q: "ما هو الموطن الأصلي للأناناس؟", opts: ["هاواي", "البرازيل", "تايلاند", "الهند"], a: 1 },
-            { q: "كم عدد أوتار آلة العود؟", opts: ["4", "5", "6", "7"], a: 2 },
-            { q: "حيوان يرى الأشعة تحت الحمراء؟", opts: ["البومة", "الثعبان", "القط", "الخفاش"], a: 1 },
-            { q: "ما هي عاصمة فيتنام؟", opts: ["سيول", "هانوي", "بانكوك", "تايبيه"], a: 1 },
-            { q: "طول الأمعاء الدقيقة؟", opts: ["2 متر", "4 متر", "6 متر", "10 متر"], a: 2 },
-            { q: "بطل رواية 'البؤساء'؟", opts: ["جان فالجان", "روبن هود", "سير بانتس", "هاملت"], a: 0 },
-            { q: "الكوكب الأكثر حرارة؟", opts: ["عطارد", "الزهرة", "المريخ", "المشتري"], a: 1 },
-            { q: "مادة بناء خلية النحل؟", opts: ["العسل", "الشمع", "البروبوليس", "الغذاء"], a: 1 },
-            { q: "مكتشف جرثومة التيفويد؟", opts: ["إيبرث", "باستير", "كوخ", "جينر"], a: 0 },
-            { q: "أكبر دولة عربية مساحةً؟", opts: ["مصر", "السعودية", "الجزائر", "السودان"], a: 2 },
-            { q: "عدد عضلات جسم الإنسان؟", opts: ["200", "450", "630", "800"], a: 2 },
-            { q: "ما هي عاصمة البرازيل؟", opts: ["ريو", "ساو باولو", "برازيليا", "ليما"], a: 2 },
-            { q: "ما هو الطائر 'الهيثم'؟", opts: ["الصقر", "النسر", "العقاب", "البومة"], a: 0 },
-            { q: "أين يقع برج بيزا المائل؟", opts: ["روما", "البندقية", "بيزا", "ميلانو"], a: 2 },
-            { q: "من هو ملك الموت؟", opts: ["إسرافيل", "ميكائيل", "عزرائيل", "رضوان"], a: 2 },
-            { q: "أصغر كواكب المجموعة الشمسية؟", opts: ["المريخ", "عطارد", "بلوتو", "الزهرة"], a: 1 },
-            { q: "عدد الغدد اللعابية؟", opts: ["2", "4", "6", "8"], a: 2 },
-            { q: "قارة بلا براكين نشطة؟", opts: ["أوروبا", "أستراليا", "أفريقيا", "أنتاركتيكا"], a: 1 },
-            { q: "أول من استخدم الورق؟", opts: ["الفراعنة", "الصينيون", "اليونان", "العرب"], a: 1 },
-            { q: "سورة تعادل ربع القرآن؟", opts: ["الإخلاص", "الكافرون", "الفلق", "النصر"], a: 1 },
-            { q: "عدد جفون العين لدى الجمل؟", opts: ["1", "2", "3", "4"], a: 2 },
-            { q: "عملة المكسيك؟", opts: ["البيزو", "الدولار", "الريال", "الليرة"], a: 0 },
-            { q: "مخترع الآلة الحاسبة؟", opts: ["باسكال", "نيوتن", "أديسون", "دا فينشي"], a: 0 },
-            { q: "أندر فصيلة دم؟", opts: ["O-", "AB-", "Rh-null", "B+"], a: 2 },
-            { q: "عام غرق تايتانيك؟", opts: ["1910", "1912", "1915", "1920"], a: 1 },
-            { q: "الاسم القديم لإسطنبول؟", opts: ["يثرب", "طيبة", "القسطنطينية", "أنقرة"], a: 2 },
-            { q: "عدد صمامات القلب؟", opts: ["2", "3", "4", "5"], a: 2 },
-            { q: "أعمق نقطة في المحيطات؟", opts: ["ماريانا", "بورتوريكو", "جاوة", "موريس"], a: 0 },
-            { q: "من أهدى أمريكا تمثال الحرية؟", opts: ["بريطانيا", "فرنسا", "ألمانيا", "إيطاليا"], a: 1 },
-            { q: "شجرة استخرج منها الأسبرين؟", opts: ["الصفصاف", "البلوط", "الصنوبر", "الأرز"], a: 0 },
-            { q: "غاز تنقية مياه المسابح؟", opts: ["الفلور", "الكلور", "اليود", "الأوزون"], a: 1 },
-            { q: "أول إنسان مشى على القمر؟", opts: ["يوري", "نيل أرمسترونغ", "بز", "مايكل"], a: 1 },
-            { q: "عدد ألوان علم الكويت؟", opts: ["3", "4", "5", "6"], a: 1 },
-            { q: "الاسم الكيميائي لملح الطعام؟", opts: ["كلوريد صوديوم", "كربونات صوديوم", "أكسيد حديد", "نترات فضة"], a: 0 },
-            { q: "مؤلف هاري بوتر؟", opts: ["رولينج", "كينج", "أجاثا", "شكسبير"], a: 0 },
-            { q: "عاصمة النمسا؟", opts: ["زيورخ", "فيينا", "برن", "أوسلو"], a: 1 },
-            { q: "عدد عيون النحلة؟", opts: ["2", "3", "5", "100"], a: 2 },
-            { q: "مكتشف قانون الطفو؟", opts: ["نيوتن", "أرخميدس", "فيثاغورس", "أينشتاين"], a: 1 },
-            { q: "عضو يخزن السكر الزائد؟", opts: ["المعدة", "الكبد", "البنكرياس", "الأمعاء"], a: 1 },
-            { q: "أين يقع مقر البرلمان الأوروبي؟", opts: ["بروكسل", "ستراسبورغ", "باريس", "برلين"], a: 1 },
-            { q: "علم يدرس الزلازل؟", opts: ["سيزمولوجيا", "جيولوجيا", "بيولوجيا", "ميتيورولوجيا"], a: 0 },
-            { q: "مؤسس الدولة الأموية؟", opts: ["معاوية", "يزيد", "عبد الملك", "مروان"], a: 0 },
-            { q: "درجة غليان الماء بالفهرنهايت؟", opts: ["100", "180", "212", "273"], a: 2 },
-            { q: "طائر لا يطير بالقطب الجنوبي؟", opts: ["النعامة", "البطريق", "الكيوي", "الإيمو"], a: 1 },
-            { q: "فيتامين الشمس؟", opts: ["A", "B", "C", "D"], a: 3 },
-            { q: "حيوان قلبه في رأسه؟", opts: ["الجمبري", "السرطان", "الأخطبوط", "السلحفاة"], a: 0 },
-            { q: "أول عاصمة لمصر الإسلامية؟", opts: ["القاهرة", "الفسطاط", "القطائع", "العسكر"], a: 1 },
-            { q: "علم النباتات؟", opts: ["الزولوجيا", "البوتانيا", "الميكروبيولوجيا", "الفيزياء"], a: 1 },
-            { q: "درجات سلم برج إيفل؟", opts: ["500", "1000", "1665", "2500"], a: 2 },
-            { q: "عاصمة البرتغال؟", opts: ["مدريد", "لشبونة", "روما", "باريس"], a: 1 },
-            { q: "أقدم لغة مكتوبة حية؟", opts: ["العربية", "الصينية", "اليونانية", "العبرية"], a: 1 },
-            { q: "عدد أسنان الكلب؟", opts: ["32", "38", "42", "44"], a: 2 },
-            { q: "حيوان ينام 20 ساعة؟", opts: ["الأسد", "الكسلان", "الكوالا", "الفهد"], a: 2 },
-            { q: "مخترع الميكروسكوب؟", opts: ["ليفينهوك", "جاليليو", "نيوتن", "باستير"], a: 0 },
-            {
+            { q: "ما هو الذهب الأسود؟", opts: ["الفحم", "البترول", "الحديد", "الماس"], a: 1 },
+            { q: "ما هي عاصمة السعودية؟", opts: ["جدة", "مكة", "الرياض", "الدمام"], a: 2 },
+            { q: "أكبر كوكب في المجموعة الشمسية؟", opts: ["الأرض", "المريخ", "المشتري", "زحل"], a: 2 }
+            // ... يمكنك إضافة الـ 120 سؤال هنا لاحقاً
+        ];
+
+        function showToast(m) {
+            const t = document.getElementById('custom-toast');
+            t.innerText = m; t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 2000);
+        }
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function saveProfile() {
+            pInfo.name = document.getElementById('p-name').value.trim();
+            if(!pInfo.name) return showToast("أدخل اسمك!");
+            document.getElementById('welcome-txt').innerText = "أهلاً " + addTag(pInfo.name);
+            showScreen('screen-menu');
+        }
+
+        function copyRoomCode() {
+            navigator.clipboard.writeText(roomID);
+            showToast("تم النسخ ✅");
+        }
+
+        // --- فردي ---
+        function startSoloMode() {
+            isSolo = true;
+            document.getElementById('opp-ui').style.visibility = 'hidden';
+            document.getElementById('chat-ui').style.display = 'none';
+            document.getElementById('back-solo').style.display = 'block';
+            document.getElementById('my-name-ui').innerText = addTag(pInfo.name);
+            showScreen('screen-game');
+            nextSoloQ();
+        }
+
+        function nextSoloQ() {
+            const q = questionsList[Math.floor(Math.random()*questionsList.length)];
+            renderQ(q, true);
+        }
+
+        // --- جماعي ---
+        function createNewGame() {
+            isSolo = false; isHost = true;
+            roomID = Math.random().toString(36).substr(2, 5).toUpperCase();
+            const limit = parseInt(document.getElementById('game-limit').value);
+            db.ref('rooms/' + roomID).set({
+                host: pInfo, status: "waiting", turn: pInfo.id, limit: limit,
+                qIndex: Math.floor(Math.random()*questionsList.length),
+                scores: { [pInfo.id]: 0 }
+            });
+            document.getElementById('display-menu-code').innerText = roomID;
+            document.getElementById('host-wait').style.display = 'block';
+            listenRoom();
+        }
+
+        function joinExistingGame() {
+            isSolo = false; isHost = false;
+            roomID = document.getElementById('join-code').value.toUpperCase().trim();
+            if(!roomID) return showToast("أدخل الكود");
+            db.ref('rooms/' + roomID).once('value', s => {
+                if(s.exists()){
+                    db.ref('rooms/' + roomID + '/guest').set(pInfo);
+                    db.ref('rooms/' + roomID + '/status').set("playing");
+                    listenRoom();
+                } else showToast("الكود غلط");
+            });
+        }
+
+        function listenRoom() {
+            db.ref('rooms/' + roomID).on('value', s => {
+                const data = s.val(); if(!data) return;
+                if(data.status === "playing" || data.guest) {
+                    showScreen('screen-game');
+                    document.getElementById('my-name-ui').innerText = addTag(pInfo.name);
+                    const opp = isHost ? data.guest : data.host;
+                    if(opp) document.getElementById('opp-name').innerText = addTag(opp.name);
+                    document.getElementById('my-score').innerText = data.scores[pInfo.id] || 0;
+                    if(opp) document.getElementById('opp-score').innerText = data.scores[opp.id] || 0;
+                    
+                    const myTurn = (data.turn === pInfo.id);
+                    document.getElementById('turn-text').innerText = myTurn ? "دورك ⚡" : "انتظر..";
+                    document.getElementById('turn-indicator').className = "turn-badge " + (myTurn ? "my-turn" : "opp-turn");
+                    
+                    renderQ(questionsList[data.qIndex % questionsList.length], false, data);
+                }
+            });
+        }
+
+        function renderQ(q, solo, data) {
+            document.getElementById('q-text').innerText = q.q;
+            const container = document.getElementById('q-options');
+            container.innerHTML = "";
+            q.opts.forEach((opt, i) => {
+                const b = document.createElement('button');
+                b.className = "opt-btn";
+                b.innerText = opt;
+                if(!solo) b.disabled = (data.turn !== pInfo.id);
+                b.onclick = () => {
+                    if(i === q.a) {
+                        b.style.background = "var(--success)";
+                        if(solo) {
+                            let s = parseInt(document.getElementById('my-score').innerText) + 1;
+                            document.getElementById('my-score').innerText = s;
+                            setTimeout(nextSoloQ, 800);
+                        } else {
+                            let ns = (data.scores[pInfo.id] || 0) + 1;
+                            if(ns >= data.limit) {
+                                db.ref('rooms/' + roomID).update({status:"end", winner: pInfo.name});
+                                showEnd(pInfo.name);
+                            } else {
+                                db.ref('rooms/'+roomID+'/scores/'+pInfo.id).set(ns);
+                                db.ref('rooms/'+roomID).update({qIndex: Math.floor(Math.random()*questionsList.length)});
+                            }
+                        }
+                    } else {
+                        b.style.background = "var(--danger)";
+                        if(!solo) {
+                            const next = isHost ? data.guest.id : data.host.id;
+                            db.ref('rooms/'+roomID).update({turn: next});
+                        }
+                    }
+                };
+                container.appendChild(b);
+            });
+        }
+
+        function showEnd(w) {
+            document.getElementById('end-msg').innerText = "الفائز: " + addTag(w);
+            document.getElementById('game-over-modal').style.display = 'flex';
+        }
+
+        function sendMessage() {
+            const inp = document.getElementById('chat-input');
+            if(!inp.value.trim()) return;
+            db.ref('chats/' + roomID).push({ u: pInfo.name, t: inp.value });
+            inp.value = "";
+        }
+
+        db.ref('chats/' + roomID).on('child_added', s => {
+            const m = s.val();
+            const d = document.createElement('div'); d.className = "msg-line";
+            d.style.alignSelf = m.u === pInfo.name ? "flex-start" : "flex-end";
+            d.innerHTML = `<b>${addTag(m.u)}</b>: ${m.t}`;
+            document.getElementById('chat-content').appendChild(d);
+        });
+    </script>
+</body>
+</html>

@@ -119,9 +119,8 @@
     </div>
 
     <script>
-        // بنك الأسئلة المحدث (أكثر من 170 سؤال منوع وشامل)
+        // بنك الأسئلة المحدث
         const questionsList = [
-            // الدفعة الأولى الأصلية
             { q: "ما هو العنصر الكيميائي الأكثر وفرة في الكون؟", opts: ["الأكسجين", "الهيدروجين", "الهيليوم", "النيتروجين"], a: 1 },
             { q: "من هو القائد المسلم الذي فتح الأندلس؟", opts: ["صلاح الدين الأيوبي", "طارق بن زياد", "خالد بن الوليد", "عمرو بن العاص"], a: 1 },
             { q: "ما هي عاصمة الإمبراطورية البيزنطية؟", opts: ["روما", "أثينا", "القسطنطينية", "الإسكندرية"], a: 2 },
@@ -166,8 +165,6 @@
             { q: "من هو مكتشف الجاذبية الأرضية؟", opts: ["إينشتاين", "نيوتن", "جاليليو", "أرخميدس"], a: 1 },
             { q: "كم عدد العظام في جسم الإنسان البالغ؟", opts: ["200", "206", "210", "215"], a: 1 },
             { q: "ما هي عاصمة تركيا؟", opts: ["إسطنبول", "أنقرة", "إزمير", "أنطاليا"], a: 1 },
-            
-            // الدفعة الثانية (الأسئلة الـ 100 الجديدة)
             { q: "ما هي السورة التي تسمى عروس القرآن؟", opts: ["يس", "الرحمن", "البقرة", "الملك"], a: 1 },
             { q: "كم عدد أسنان الجمل؟", opts: ["32", "34", "36", "38"], a: 1 },
             { q: "من هو الصحابي الملقب بـ أسد الله؟", opts: ["عمر بن الخطاب", "علي بن أبي طالب", "حمزة بن عبدالمطلب", "خالد بن الوليد"], a: 2 },
@@ -272,6 +269,15 @@
         let timerInterval = null, startTime = null;
         window.revealTimeout = null;
 
+        // دالة لاكتشاف اسم Asoo وإضافة التاج
+        function addTag(name) {
+            if (!name) return "";
+            if (name.trim().toLowerCase() === 'asoo' || name.trim() === 'أسو') {
+                return name + ' 👑';
+            }
+            return name;
+        }
+
         function showToast(msg) {
             const t = document.getElementById('custom-toast');
             t.innerText = msg; t.style.display = 'block';
@@ -286,7 +292,8 @@
         function saveProfile() {
             playerInfo.name = document.getElementById('p-name').value.trim();
             if(!playerInfo.name) return showToast("⚠️ اكتب اسمك أولاً");
-            document.getElementById('welcome-txt').innerText = `أهلاً بك ${playerInfo.name}`;
+            document.getElementById('welcome-txt').innerText = `أهلاً بك ${addTag(playerInfo.name)}`;
+            document.getElementById('my-name').innerText = addTag(playerInfo.name);
             showScreen('screen-menu');
         }
 
@@ -296,7 +303,7 @@
             document.getElementById('room-code-display').style.display = 'block';
             document.getElementById('display-code').innerText = roomID;
             
-            // خوارزمية (Fisher-Yates) لخلط الأسئلة بشكل عشوائي تماماً في كل غرفة جديدة
+            // خوارزمية (Fisher-Yates) وتحويلها لنص لمنع أخطاء اختلاف النسخ والمزامنة بين الأجهزة
             let order = questionsList.map((_, i) => i);
             for (let i = order.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -307,7 +314,7 @@
             db.ref('rooms/' + roomID).set({
                 host: playerInfo, turn: playerInfo.id, qIndex: 0,
                 scores: { [playerInfo.id]: 0 }, status: "waiting", limit: targetScore,
-                qOrder: order, selectedOption: null
+                qOrderStr: order.join(','), selectedOption: null
             });
             listenToRoom();
         }
@@ -332,7 +339,7 @@
                 
                 if(data.status === "finished") { 
                     clearInterval(timerInterval); 
-                    showEndModal(data.winnerName); 
+                    showEndModal(addTag(data.winnerName)); 
                     return; 
                 }
                 if(data.status === "playing") {
@@ -345,21 +352,26 @@
                     });
                 }
                 if(data.guest && data.host) {
-                    document.getElementById('opp-name').innerText = isHost ? data.guest.name : data.host.name;
+                    document.getElementById('opp-name').innerText = isHost ? addTag(data.guest.name) : addTag(data.host.name);
                 }
                 myTurn = (data.turn === playerInfo.id);
                 document.getElementById('turn-text').innerText = myTurn ? "دورك الآن ⚡" : "انتظر الخصم";
                 document.getElementById('turn-indicator').className = "turn-badge " + (myTurn ? "my-turn" : "opp-turn");
 
-                const q = questionsList[data.qOrder[data.qIndex % questionsList.length]];
-                updateUI(q, data);
+                // استخراج ترتيب الأسئلة بأمان تام
+                if(data.qOrderStr) {
+                    const orderArr = data.qOrderStr.split(',').map(Number);
+                    let q = questionsList[orderArr[data.qIndex % orderArr.length]];
+                    if (!q) q = questionsList[0]; // حماية إضافية للذاكرة المؤقتة
+                    updateUI(q, data);
+                }
             });
 
             db.ref('chats/' + roomID).on('child_added', s => {
                 const m = s.val();
                 const d = document.createElement('div'); d.className = "msg-line";
                 d.style.alignSelf = m.user === playerInfo.name ? "flex-start" : "flex-end";
-                d.innerHTML = `<b style="color:var(--accent); font-size:10px;">${m.user}</b><br>${m.text}`;
+                d.innerHTML = `<b style="color:var(--accent); font-size:10px;">${addTag(m.user)}</b><br>${m.text}`;
                 const content = document.getElementById('chat-content');
                 content.appendChild(d); content.scrollTop = content.scrollHeight;
             });
@@ -370,41 +382,37 @@
             const container = document.getElementById('q-options'); 
             container.innerHTML = "";
             
-            // رسم الأزرار
             q.opts.forEach((opt, i) => {
                 const b = document.createElement('button'); 
                 b.className = "opt-btn";
                 b.innerText = opt; 
                 
-                // التحقق مما إذا كان هناك إجابة تم اختيارها للتو لكي تظهر للجميع
+                // إذا تم اختيار إجابة للتو، اعرضها للجميع
                 if (data.selectedOption !== undefined && data.selectedOption !== null) {
                     b.disabled = true;
-                    // إذا الإجابة المختارة صحيحة، أظهرها بالأخضر للجميع
-                    if (data.selectedOption === q.a) {
-                        if (i === q.a) {
-                            b.style.backgroundColor = "var(--success)";
-                            b.style.color = "#000";
-                            b.style.opacity = "1";
+                    if (i === data.selectedOption) {
+                        if (data.isCorrect) {
+                            b.style.backgroundColor = "var(--success)"; // أخضر
                             b.style.borderColor = "var(--success)";
-                        }
-                    } else {
-                        // إذا الإجابة المختارة خاطئة، أظهرها بالأحمر ليتم استبعادها
-                        if (i === data.selectedOption) {
-                            b.style.backgroundColor = "var(--danger)";
-                            b.style.color = "#000";
-                            b.style.opacity = "1";
+                        } else {
+                            b.style.backgroundColor = "var(--danger)"; // أحمر
                             b.style.borderColor = "var(--danger)";
                         }
+                        b.style.color = "#000";
+                        b.style.opacity = "1";
                     }
                 } else {
-                    // الوضع الطبيعي (لا يوجد إجابة معروضة الآن)
                     b.disabled = !myTurn;
                     b.onclick = () => {
                         sfx.click.play();
-                        // نرسل الاختيار لقاعدة البيانات ليراه الجميع
-                        db.ref('rooms/' + roomID).update({ selectedOption: i });
+                        const isCorrect = (i === q.a);
+                        // نرسل الاختيار ونتيجته ليراه الجميع
+                        db.ref('rooms/' + roomID).update({ 
+                            selectedOption: i,
+                            isCorrect: isCorrect
+                        });
                         
-                        if (i === q.a) {
+                        if (isCorrect) {
                             sfx.correct.play();
                             showToast("✅ إجابة صحيحة!");
                         } else {
@@ -416,14 +424,13 @@
                 container.appendChild(b);
             });
 
-            // مؤقت الانتقال للسؤال التالي (يعمل فقط عند اللاعب الذي عليه الدور لمنع التكرار)
+            // مؤقت الانتقال (خاص باللاعب الذي أجاب فقط لمنع التكرار)
             if (data.selectedOption !== undefined && data.selectedOption !== null && myTurn) {
                 if (!window.revealTimeout) {
                     window.revealTimeout = setTimeout(() => {
                         window.revealTimeout = null;
                         
-                        if (data.selectedOption === q.a) {
-                            // إذا الإجابة كانت صحيحة: زيادة الرصيد والانتقال لسؤال جديد
+                        if (data.isCorrect) {
                             const ns = (data.scores[playerInfo.id] || 0) + 1;
                             if(ns >= data.limit) {
                                 db.ref('rooms/' + roomID).update({ selectedOption: null, status: "finished", winnerName: playerInfo.name });
@@ -433,11 +440,10 @@
                                 db.ref('rooms/' + roomID + '/scores/' + playerInfo.id).set(ns);
                             }
                         } else {
-                            // إذا كانت خاطئة: انتقال الدور للخصم (مع إخفاء الإجابة الخاطئة) لمحاولة الإجابة
                             const next = isHost ? (data.guest ? data.guest.id : data.host.id) : data.host.id;
                             db.ref('rooms/' + roomID).update({ selectedOption: null, turn: next });
                         }
-                    }, 2000); // الانتظار ثانيتين قبل الانتقال
+                    }, 2000);
                 }
             }
         }
@@ -466,7 +472,7 @@
 
         function showEndModal(winnerName) {
             sfx.victory.play();
-            document.getElementById('end-title').innerText = winnerName === playerInfo.name ? "🏆 فزت بالمباراة!" : "💔 حظاً أوفر";
+            document.getElementById('end-title').innerText = winnerName.includes(playerInfo.name) ? "🏆 فزت بالمباراة!" : "💔 حظاً أوفر";
             document.getElementById('end-msg').innerText = "الفائز هو: " + winnerName;
             document.getElementById('total-time').innerText = "مدة المباراة: " + document.getElementById('game-timer').innerText;
             document.getElementById('game-over-modal').style.display = 'flex';
